@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/Carbonfrost/joe-cli v0.5.2
+	github.com/yuin/goldmark v1.5.4
 	honnef.co/go/tools v0.4.3
 )
 
