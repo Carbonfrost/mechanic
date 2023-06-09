@@ -4,10 +4,11 @@ import (
 	"io"
 	"os"
 
-	"github.com/Carbonfrost/joe-cli"
+	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli/extensions/color"
 	"github.com/Carbonfrost/mechanic/internal/build"
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/text"
 )
 
@@ -23,38 +24,52 @@ func NewApp() *cli.App {
 		Uses: cli.Pipeline(
 			&color.Options{},
 		),
-		Action: func(c *cli.Context) error {
-			return c.FileSet("files").Do(func(f *cli.File, err error) error {
-				if err != nil {
-					return err
-				}
-				return renderPage(f.Name)
-			})
-		},
+		Action:  processExpression,
 		Version: build.Version,
 		Args: []*cli.Arg{
 			{
 				Name:    "files",
 				Value:   new(cli.FileSet),
 				Options: cli.Merge,
+				NArg:    cli.TakeUntilNextFlag,
+			},
+			{
+				Name: "expression",
+				Value: &cli.Expression{
+					Exprs: Exprs(),
+				},
 			},
 		},
 	}
 }
 
-func renderPage(file string) error {
+func processExpression(c *cli.Context) error {
+	return c.FileSet("files").Do(func(f *cli.File, err error) error {
+		if err != nil {
+			return err
+		}
+
+		source, node, err := parseDocument(f.Name)
+		if err != nil {
+			return err
+		}
+
+		exp := ensurePrinter(c.Expression("expression"), source)
+		return exp.Evaluate(c, newSet(node))
+	})
+}
+
+func parseDocument(file string) ([]byte, ast.Node, error) {
 	f, err := os.Open(file)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	source, err := io.ReadAll(f)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	node := goldmark.DefaultParser().Parse(text.NewReader(source))
-	renderer := goldmark.DefaultRenderer()
-	renderer.Render(os.Stdout, source, node)
-	return nil
+	return source, node, nil
 }
