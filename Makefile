@@ -13,3 +13,6 @@ install: -install-mechanic
 
 -install-%: build -check-env-PREFIX -check-env-_GO_OUTPUT_DIR
 	$(Q) eng/install "${_GO_OUTPUT_DIR}/$*" $(PREFIX)/bin
+
+lint:
+	$(Q) go run honnef.co/go/tools/cmd/staticcheck -checks 'all,-ST*' $(shell go list ./...)
