@@ -7,7 +7,7 @@ import (
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli/extensions/color"
 	"github.com/Carbonfrost/mechanic/internal/build"
-	"github.com/yuin/goldmark"
+	"github.com/Carbonfrost/mechanic/pkg/markdown"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/text"
 )
@@ -23,6 +23,7 @@ func NewApp() *cli.App {
 		Comment:  "Markdown processing and rendering",
 		Uses: cli.Pipeline(
 			&color.Options{},
+			markdown.SetContext(),
 		),
 		Action:  processExpression,
 		Version: build.Version,
@@ -49,7 +50,7 @@ func processExpression(c *cli.Context) error {
 			return err
 		}
 
-		source, node, err := parseDocument(f.Name)
+		source, node, err := parseDocument(c, f.Name)
 		if err != nil {
 			return err
 		}
@@ -59,7 +60,7 @@ func processExpression(c *cli.Context) error {
 	})
 }
 
-func parseDocument(file string) ([]byte, ast.Node, error) {
+func parseDocument(c *cli.Context, file string) ([]byte, ast.Node, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, nil, err
@@ -70,6 +71,7 @@ func parseDocument(file string) ([]byte, ast.Node, error) {
 		return nil, nil, err
 	}
 
-	node := goldmark.DefaultParser().Parse(text.NewReader(source))
+	parser := markdown.Must(markdown.Services(c)).Parser()
+	node := parser.Parse(text.NewReader(source))
 	return source, node, nil
 }

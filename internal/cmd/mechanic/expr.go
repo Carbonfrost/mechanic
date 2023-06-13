@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	cli "github.com/Carbonfrost/joe-cli"
-	"github.com/yuin/goldmark"
+	"github.com/Carbonfrost/mechanic/pkg/markdown"
 	"github.com/yuin/goldmark/ast"
 )
 
@@ -58,7 +58,7 @@ func Predicate(filter func(*cli.Context, ast.Node) bool) cli.EvaluatorFunc {
 
 func Render(source []byte) cli.Evaluator {
 	return Predicate(func(ctx *cli.Context, node ast.Node) bool {
-		renderer := goldmark.DefaultRenderer()
+		renderer := markdown.Must(markdown.Services(ctx)).Renderer()
 		err := renderer.Render(ctx.Stdout, source, node)
 
 		return alwaysTrue(node, err)
