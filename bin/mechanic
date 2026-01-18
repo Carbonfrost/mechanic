@@ -14,7 +14,7 @@ _trace(){
 
 if [[ -n "${BUILD_FIRST}" ]]; then
     _trace "Building..."
-    make
+    make -C "${dir}/.."
     _trace "\r\033[K"
 fi
 
